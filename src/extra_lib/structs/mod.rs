@@ -1,5 +1,7 @@
 pub mod extra_day;
 pub mod extra_duty;
+pub mod extra_limiter;
+pub mod extra_place;
 pub mod extra_table;
 pub mod month;
 pub mod worker;

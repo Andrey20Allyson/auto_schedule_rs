@@ -24,7 +24,5 @@ fn main() -> Result<(), DynError> {
     println!("{}", table.borrow());
     println!("{}", integrity);
 
-    // println!("{:#?}", workers.get(0).ok_or("err")?);
-
     Ok(())
 }

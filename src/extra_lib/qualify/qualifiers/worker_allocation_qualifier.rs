@@ -44,8 +44,6 @@ impl Qualifier for WorkerAllocationQualifier {
                 continue;
             }
 
-            println!("{}", worker.name);
-
             let penality = self.calculate_unassigned_worker_penality(2);
 
             irregularities.add_penality("Worker hasn't collectly allocated", penality);

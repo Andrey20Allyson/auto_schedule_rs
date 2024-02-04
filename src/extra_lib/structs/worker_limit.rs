@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
+use super::extra_place::ExtraPlaceId;
+
 #[derive(Debug)]
 pub struct WorkerLimit {
     pub default_limit: u8,
-    pub places: HashMap<u8, u8>,
+    pub places: HashMap<ExtraPlaceId, u8>,
 }
 
 impl WorkerLimit {
@@ -12,6 +14,10 @@ impl WorkerLimit {
             places,
             ..Default::default()
         }
+    }
+
+    pub fn of(&self, place_id: &ExtraPlaceId) -> u8 {
+        *self.places.get(place_id).unwrap_or(&self.default_limit)
     }
 }
 

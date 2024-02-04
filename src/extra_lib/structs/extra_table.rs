@@ -4,31 +4,42 @@ use crate::extra_lib::{error::ExtraError, utils};
 
 use colored::Colorize;
 
-use super::{extra_day::ExtraDay, extra_duty::ExtraDuty, worker::Worker};
+use super::{
+    extra_day::ExtraDay, extra_duty::ExtraDuty, extra_limiter::ExtraLimiter,
+    extra_place::ExtraPlaceHolder, worker::Worker,
+};
 
 pub struct ExtraDutyTable {
     pub days: Vec<Rc<RefCell<ExtraDay>>>,
     pub width: usize,
+    pub limiter: ExtraLimiter,
+    pub current_place: ExtraPlaceHolder,
     pub duty_limit: usize,
     pub day_size: usize,
 }
 
 impl ExtraDutyTable {
     pub fn new(width: usize, day_size: usize) -> Rc<RefCell<ExtraDutyTable>> {
-        let table = Rc::new(RefCell::new(ExtraDutyTable {
+        let current_place = ExtraPlaceHolder::default();
+
+        let table = ExtraDutyTable {
+            limiter: ExtraLimiter::new(current_place.clone()),
             days: Vec::new(),
+            current_place,
             duty_limit: 3,
             day_size,
             width,
-        }));
+        };
+
+        let shared_table = Rc::new(RefCell::new(table));
 
         for i in 0..width {
-            let day = ExtraDay::new(i, &table);
+            let day = ExtraDay::new(i, &shared_table);
 
-            table.borrow_mut().days.push(day);
+            shared_table.borrow_mut().days.push(day);
         }
 
-        table
+        shared_table
     }
 
     pub fn list_duties(&self) -> Vec<Rc<RefCell<ExtraDuty>>> {
