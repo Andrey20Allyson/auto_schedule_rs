@@ -1,3 +1,4 @@
+pub mod extra_config;
 pub mod extra_day;
 pub mod extra_duty;
 pub mod extra_limiter;

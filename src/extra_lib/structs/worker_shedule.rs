@@ -31,11 +31,11 @@ impl WorkerSchedule {
         let mut schedule = WorkerSchedule {
             days: Vec::new(),
             is_daily_worker,
-            num_of_days_off: month.len(),
+            num_of_days_off: month.number_of_days(),
             month,
         };
 
-        for _ in 0..schedule.month.len() {
+        for _ in 0..schedule.month.number_of_days() {
             schedule.days.push(DayRestriction::None);
         }
 

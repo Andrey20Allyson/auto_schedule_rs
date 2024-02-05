@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use chrono::{Datelike, Local};
+
 use crate::extra_lib::error::DynError;
 
 use super::year::Year;
@@ -27,6 +29,13 @@ pub struct Month {
 }
 
 impl Month {
+    pub fn now() -> Month {
+        Month {
+            year: Year::now(),
+            index: Local::now().month() as u8,
+        }
+    }
+
     pub fn new(year: u16, index: u8) -> Result<Month, DynError> {
         if index > NUMBER_OF_MONTHS - 1 {
             return Err(Box::new(InvalidMonthIndexError(index)));
@@ -38,7 +47,7 @@ impl Month {
         })
     }
 
-    pub fn len(&self) -> u8 {
+    pub fn number_of_days(&self) -> u8 {
         let aditional_day = if self.index == FEBRUARY_MONTH_INDEX && self.year.is_leap() {
             1
         } else {
@@ -46,5 +55,11 @@ impl Month {
         };
 
         DAYS_IN_MONTH[self.index as usize] + aditional_day
+    }
+}
+
+impl Default for Month {
+    fn default() -> Self {
+        Self::now()
     }
 }
