@@ -5,8 +5,11 @@ use extra_lib::{
     mock::worker::WorkerMocker, structs::extra_table::ExtraDutyTable,
 };
 
-use crate::extra_lib::qualify::{
-    qualifiers::worker_allocation_qualifier::WorkerAllocationQualifier, verifier::Verifier,
+use crate::extra_lib::{
+    assign::rules::WorkerLimitRule,
+    qualify::{
+        qualifiers::worker_allocation_qualifier::WorkerAllocationQualifier, verifier::Verifier,
+    },
 };
 
 pub mod extra_lib;
@@ -18,7 +21,10 @@ fn main() -> Result<(), DynError> {
 
     let start_process_time = Local::now().timestamp_millis();
 
-    let assigner = TableAssigner::from_rules(&mut vec![Box::new(DutyLimitRule::new())]);
+    let assigner = TableAssigner::from_rules(&mut vec![
+        Box::new(DutyLimitRule::new()),
+        Box::new(WorkerLimitRule::new()),
+    ]);
     assigner.assign_into(&table, &workers)?;
 
     let verifier =

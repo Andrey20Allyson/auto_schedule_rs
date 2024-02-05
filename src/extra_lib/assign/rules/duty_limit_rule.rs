@@ -8,7 +8,7 @@ pub struct DutyLimitRule {
 
 impl DutyLimitRule {
     pub fn new() -> DutyLimitRule {
-        DutyLimitRule { id: 0x00 }
+        DutyLimitRule { id: 1 }
     }
 }
 

@@ -1,13 +1,14 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use super::{
     extra_place::{ExtraPlaceHolder, ExtraPlaceId},
     worker::Worker,
 };
 
+#[derive(Clone)]
 pub struct ExtraLimiter {
     pub current_place: ExtraPlaceHolder,
-    places: HashMap<ExtraPlaceId, HashMap<u64, u8>>,
+    places: Rc<RefCell<HashMap<ExtraPlaceId, Rc<RefCell<HashMap<u64, u8>>>>>>,
 }
 
 impl ExtraLimiter {
@@ -18,22 +19,42 @@ impl ExtraLimiter {
         }
     }
 
-    pub fn current_counter(&self) -> Option<&HashMap<u64, u8>> {
+    pub fn current_counter(&self) -> Rc<RefCell<HashMap<u64, u8>>> {
         let place_id = self.current_place.get();
 
-        self.places.get(&place_id)
+        let mut counters = self.places.borrow_mut();
+
+        match counters.get(&place_id) {
+            Some(counter) => Rc::clone(counter),
+            None => {
+                let new_counter = Default::default();
+
+                counters.insert(place_id, Rc::clone(&new_counter));
+
+                new_counter
+            }
+        }
     }
 
     pub fn positions_of(&self, worker_id: &u64) -> u8 {
-        let counter = self.current_counter();
-
-        match counter {
-            Some(counter) => match counter.get(worker_id) {
-                Some(positions) => *positions,
-                None => 0,
-            },
+        match self.current_counter().borrow().get(worker_id) {
+            Some(positions) => *positions,
             None => 0,
         }
+    }
+
+    pub fn set_positions_of(&self, worker_id: u64, value: u8) {
+        let current_counter = self.current_counter();
+
+        current_counter.borrow_mut().insert(worker_id, value);
+    }
+
+    pub fn increment(&self, worker_id: u64) -> u8 {
+        let new_value = self.positions_of(&worker_id) + 1;
+
+        self.set_positions_of(worker_id, new_value);
+
+        new_value
     }
 
     pub fn positions_left_of(&self, worker: &Worker) -> u8 {
