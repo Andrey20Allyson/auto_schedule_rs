@@ -57,6 +57,18 @@ impl ExtraLimiter {
         new_value
     }
 
+    pub fn decrement(&self, worker_id: u64) -> u8 {
+        let new_value = self.positions_of(&worker_id) - 1;
+
+        self.set_positions_of(worker_id, new_value);
+
+        new_value
+    }
+
+    pub fn clear(&self) {
+        self.current_counter().borrow_mut().clear();
+    }
+
     pub fn positions_left_of(&self, worker: &Worker) -> u8 {
         let place_id = self.current_place.get();
 

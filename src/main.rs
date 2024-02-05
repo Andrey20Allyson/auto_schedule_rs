@@ -1,3 +1,5 @@
+use std::env::args;
+
 use chrono::Local;
 use colored::Colorize;
 use extra_lib::{
@@ -19,21 +21,38 @@ fn main() -> Result<(), DynError> {
     let mut mocker = WorkerMocker::new();
     let workers = mocker.vec(27);
 
-    let start_process_time = Local::now().timestamp_millis();
-
     let assigner = TableAssigner::from_rules(&mut vec![
         Box::new(DutyLimitRule::new()),
         Box::new(WorkerLimitRule::new()),
     ]);
-    assigner.assign_into(&table, &workers)?;
 
     let verifier =
         Verifier::from_qualifiers(&mut vec![Box::new(WorkerAllocationQualifier::new(140))]);
-    let integrity = verifier.verify(&table)?;
+
+    println!("{}", table.config.get_num_of_days());
+    println!("{}", table.config.get_duties_per_day());
+
+    let start_process_time = Local::now().timestamp_millis();
+
+    let args: Vec<_> = args().collect();
+    let iterations: i32 = args.get(1).unwrap().parse().unwrap();
+
+    for _ in 0..iterations {
+        table.clear();
+
+        assigner.assign_into(&table, &workers)?;
+
+        verifier.verify(&table)?;
+    }
 
     let end_process_time = Local::now().timestamp_millis();
 
-    println!("{}", table);
+    let verifier =
+        Verifier::from_qualifiers(&mut vec![Box::new(WorkerAllocationQualifier::new(140))]);
+
+    let integrity = verifier.verify(&table)?;
+
+    // println!("{}", table);
     println!("{}", integrity);
     println!(
         "Assign Time: {}",

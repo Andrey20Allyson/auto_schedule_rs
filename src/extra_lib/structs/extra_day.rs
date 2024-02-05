@@ -56,7 +56,7 @@ impl Display for ExtraDay {
         )?;
 
         for duty in self.duties.iter() {
-            write!(f, "{}", duty.worker_qnt().to_string().bright_green())?;
+            write!(f, "{}", duty)?;
 
             if duty.index < self.number_of_duties() - 1 {
                 write!(f, ", ")?;

@@ -43,15 +43,7 @@ impl ExtraDutyTable {
     }
 
     pub fn list_duties(&self) -> Vec<&ExtraDuty> {
-        let mut duties = Vec::new();
-
-        for day in self.days.iter() {
-            for duty in day.duties.iter() {
-                duties.push(duty);
-            }
-        }
-
-        duties
+        self.days.iter().flat_map(|day| day.duties.iter()).collect()
     }
 
     pub fn list_workers(&self) -> Vec<Rc<Worker>> {
@@ -66,6 +58,16 @@ impl ExtraDutyTable {
         }
 
         worker_map.drain().map(|(_, worker)| worker).collect()
+    }
+
+    pub fn clear(&self) {
+        for day in self.days.iter() {
+            for duty in day.duties.iter() {
+                duty.clear();
+            }
+        }
+
+        self.limiter.clear();
     }
 
     pub fn get_day(&self, index: usize) -> Result<&ExtraDay, ExtraError> {

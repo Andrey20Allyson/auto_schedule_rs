@@ -4,7 +4,7 @@ use crate::extra_lib::{
     assign::rules::AssignRule,
     error::ExtraError,
     structs::{extra_duty::ExtraDuty, extra_table::ExtraDutyTable, worker::Worker},
-    utils::random::Randomizable,
+    utils::random::{randomize_vec, randomize_vec_ref, Randomizable},
 };
 
 pub struct TableAssigner {
@@ -43,13 +43,37 @@ impl TableAssigner {
         table: &ExtraDutyTable,
         workers: &Vec<Rc<Worker>>,
     ) -> Result<(), ExtraError> {
-        for day in table.list_days().rand() {
-            for duty in day.list_duties().rand() {
-                for worker in workers.rand() {
-                    self.assin_worker(&worker, duty);
+        let old_duty_limit = table.config.get_duty_limit();
+
+        let mut unassigned_workers: Vec<_> = workers.iter().collect();
+        let mut rand_days = randomize_vec(table.days.iter().collect());
+
+        for current_limit in 1..=3 {
+            table.config.set_duty_limit(current_limit);
+
+            randomize_vec_ref(&mut rand_days);
+
+            for day in rand_days.iter() {
+                for duty in day.list_duties().rand() {
+                    randomize_vec_ref(&mut unassigned_workers);
+
+                    for worker in unassigned_workers.iter() {
+                        self.assin_worker(&worker, duty);
+
+                        if duty.is_full() {
+                            break;
+                        }
+                    }
                 }
+
+                unassigned_workers = unassigned_workers
+                    .into_iter()
+                    .filter(|worker| table.limiter.reached_limit(worker) == false)
+                    .collect();
             }
         }
+
+        table.config.set_duty_limit(old_duty_limit);
 
         Ok(())
     }

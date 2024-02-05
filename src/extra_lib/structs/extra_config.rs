@@ -68,6 +68,10 @@ impl ExtraConfig {
     pub fn get_duty_limit(&self) -> usize {
         self.inner.borrow().duty_limit
     }
+
+    pub fn set_duty_limit(&self, new_limit: usize) {
+        self.inner.borrow_mut().duty_limit = new_limit;
+    }
 }
 
 impl Default for ExtraConfig {
