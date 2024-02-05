@@ -1,55 +1,52 @@
-use std::{cell::RefCell, fmt::Display, rc::Rc};
+use std::fmt::Display;
 
 use colored::Colorize;
 
-use crate::extra_lib::utils;
-
-use super::{super::error::ExtraError, extra_duty::ExtraDuty, extra_table::ExtraDutyTable};
+use super::{
+    super::error::ExtraError, extra_config::ExtraConfig, extra_duty::ExtraDuty,
+    extra_table::ExtraDutyTable,
+};
 
 pub struct ExtraDay {
-    pub table: Rc<RefCell<ExtraDutyTable>>,
     pub index: usize,
-    pub duties: Vec<Rc<RefCell<ExtraDuty>>>,
-    size: usize,
+    pub config: ExtraConfig,
+    pub duties: Vec<ExtraDuty>,
 }
 
 impl ExtraDay {
-    pub fn new(index: usize, table: &Rc<RefCell<ExtraDutyTable>>) -> Rc<RefCell<ExtraDay>> {
-        let size = table.borrow().day_size;
-
-        let day = Rc::new(RefCell::new(ExtraDay {
+    pub fn new(index: usize, table: &ExtraDutyTable) -> ExtraDay {
+        let mut day = ExtraDay {
             index,
+            config: table.config.clone(),
             duties: Vec::new(),
-            table: Rc::clone(table),
-            size,
-        }));
+        };
 
-        for index in 0..size {
-            let duty = ExtraDuty::new(index, &day);
+        for index in 0..table.config.get_duties_per_day() {
+            let duty = ExtraDuty::new(index, table, &day);
 
-            day.borrow_mut().duties.push(duty);
+            day.duties.push(duty);
         }
 
         day
     }
 
-    pub fn size(&self) -> usize {
-        self.size
+    pub fn list_duties(&self) -> Vec<&ExtraDuty> {
+        self.duties.iter().collect()
     }
 
-    pub fn get_duty(&self, index: usize) -> Result<&Rc<RefCell<ExtraDuty>>, ExtraError> {
+    pub fn number_of_duties(&self) -> usize {
+        self.config.get_duties_per_day()
+    }
+
+    pub fn get_duty(&self, index: usize) -> Result<&ExtraDuty, ExtraError> {
         self.duties
             .get(index)
             .ok_or(ExtraError::CantFindDuty { index: 0 })
     }
-
-    pub fn rand(&self) -> Vec<Rc<RefCell<ExtraDuty>>> {
-        utils::random::randomize_vec(self.duties.clone())
-    }
 }
 
 impl Display for ExtraDay {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
             "[ {} {:0pad$} ] => [",
@@ -59,10 +56,9 @@ impl Display for ExtraDay {
         )?;
 
         for duty in self.duties.iter() {
-            let duty = duty.borrow();
             write!(f, "{}", duty.worker_qnt().to_string().bright_green())?;
 
-            if duty.index < self.size() - 1 {
+            if duty.index < self.number_of_duties() - 1 {
                 write!(f, ", ")?;
             }
         }

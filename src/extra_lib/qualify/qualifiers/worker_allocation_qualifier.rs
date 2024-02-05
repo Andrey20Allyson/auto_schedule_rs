@@ -30,14 +30,14 @@ impl Qualifier for WorkerAllocationQualifier {
         irregularities: &mut IrregularityStack,
         table: &ExtraDutyTable,
     ) -> Result<(), DynError> {
-        // let is_worker_insuficient = table
-        //     .list_duties()
-        //     .into_iter()
-        //     .any(move |duty| self.duty_is_worker_insuficient(&duty.borrow()));
+        let is_worker_insuficient = table
+            .list_duties()
+            .into_iter()
+            .any(move |duty| self.duty_is_worker_insuficient(duty));
 
-        // if is_worker_insuficient == false {
-        //     return Ok(());
-        // }
+        if is_worker_insuficient == false {
+            return Ok(());
+        }
 
         for worker in table.list_workers().iter() {
             if worker.schedule.has_days_off() == false {

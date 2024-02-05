@@ -1,53 +1,53 @@
-use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
+use std::{collections::HashMap, fmt::Display, rc::Rc};
 
-use crate::extra_lib::{error::ExtraError, utils};
+use crate::extra_lib::error::ExtraError;
 
 use colored::Colorize;
 
 use super::{
-    extra_day::ExtraDay, extra_duty::ExtraDuty, extra_limiter::ExtraLimiter,
-    extra_place::ExtraPlaceHolder, worker::Worker,
+    extra_config::ExtraConfig, extra_day::ExtraDay, extra_duty::ExtraDuty,
+    extra_limiter::ExtraLimiter, extra_place::ExtraPlaceHolder, worker::Worker,
 };
 
 pub struct ExtraDutyTable {
-    pub days: Vec<Rc<RefCell<ExtraDay>>>,
-    pub width: usize,
+    pub days: Vec<ExtraDay>,
+    pub config: ExtraConfig,
     pub limiter: ExtraLimiter,
     pub current_place: ExtraPlaceHolder,
-    pub duty_limit: usize,
-    pub day_size: usize,
 }
 
 impl ExtraDutyTable {
-    pub fn new(width: usize, day_size: usize) -> Rc<RefCell<ExtraDutyTable>> {
+    pub fn new(config: ExtraConfig) -> ExtraDutyTable {
         let current_place = ExtraPlaceHolder::default();
 
-        let table = ExtraDutyTable {
+        let mut table = ExtraDutyTable {
             limiter: ExtraLimiter::new(current_place.clone()),
             days: Vec::new(),
             current_place,
-            duty_limit: 3,
-            day_size,
-            width,
+            config,
         };
 
-        let shared_table = Rc::new(RefCell::new(table));
+        for i in 0..table.config.get_num_of_days() {
+            let day = ExtraDay::new(i, &table);
 
-        for i in 0..width {
-            let day = ExtraDay::new(i, &shared_table);
-
-            shared_table.borrow_mut().days.push(day);
+            table.days.push(day);
         }
 
-        shared_table
+        table
     }
 
-    pub fn list_duties(&self) -> Vec<Rc<RefCell<ExtraDuty>>> {
-        let mut duties = Vec::<Rc<RefCell<ExtraDuty>>>::new();
+    pub fn load_days(&mut self) {}
+
+    pub fn list_days(&self) -> Vec<&ExtraDay> {
+        self.days.iter().collect()
+    }
+
+    pub fn list_duties(&self) -> Vec<&ExtraDuty> {
+        let mut duties = Vec::new();
 
         for day in self.days.iter() {
-            for duty in day.borrow().duties.iter() {
-                duties.push(Rc::clone(&duty));
+            for duty in day.duties.iter() {
+                duties.push(duty);
             }
         }
 
@@ -58,9 +58,9 @@ impl ExtraDutyTable {
         let mut worker_map = HashMap::<u64, Rc<Worker>>::new();
 
         for day in self.days.iter() {
-            for duty in day.borrow().duties.iter() {
-                for (key, worker) in duty.borrow().workers.iter() {
-                    worker_map.insert(*key, Rc::clone(worker));
+            for duty in day.duties.iter() {
+                for worker in duty.list_workers() {
+                    worker_map.insert(worker.id, worker);
                 }
             }
         }
@@ -68,25 +68,21 @@ impl ExtraDutyTable {
         worker_map.drain().map(|(_, worker)| worker).collect()
     }
 
-    pub fn get_day(&self, index: usize) -> Result<&Rc<RefCell<ExtraDay>>, ExtraError> {
+    pub fn get_day(&self, index: usize) -> Result<&ExtraDay, ExtraError> {
         self.days
             .get(index)
             .ok_or(ExtraError::CantFindDay { index })
     }
-
-    pub fn rand(&self) -> Vec<Rc<RefCell<ExtraDay>>> {
-        utils::random::randomize_vec(self.days.clone())
-    }
 }
 
 impl Display for ExtraDutyTable {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         writeln!(f, "======== [ {} ] ========", "Table".bright_red())?;
 
         for day in self.days.iter() {
             write!(f, " ")?;
 
-            day.borrow().fmt(f)?;
+            day.fmt(f)?;
         }
 
         Ok(())

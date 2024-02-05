@@ -28,7 +28,7 @@ impl TableAssigner {
         self.rules.iter().all(|rule| rule.check(worker, duty))
     }
 
-    pub fn assin_worker(&self, worker: &Rc<Worker>, duty: &mut ExtraDuty) -> bool {
+    pub fn assin_worker(&self, worker: &Rc<Worker>, duty: &ExtraDuty) -> bool {
         if self.can_assing(worker, duty) == false {
             return false;
         };
@@ -43,10 +43,10 @@ impl TableAssigner {
         table: &ExtraDutyTable,
         workers: &Vec<Rc<Worker>>,
     ) -> Result<(), ExtraError> {
-        for day in table.days.rand() {
-            for duty in day.borrow().duties.rand() {
-                for worker in workers.rand().iter() {
-                    self.assin_worker(worker, &mut duty.borrow_mut());
+        for day in table.list_days().rand() {
+            for duty in day.list_duties().rand() {
+                for worker in workers.rand() {
+                    self.assin_worker(&worker, duty);
                 }
             }
         }

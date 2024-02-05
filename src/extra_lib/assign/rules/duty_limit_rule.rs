@@ -14,6 +14,6 @@ impl DutyLimitRule {
 
 impl AssignRule for DutyLimitRule {
     fn check(&self, _worker: &Worker, duty: &ExtraDuty) -> bool {
-        duty.worker_qnt() < duty.table.borrow().duty_limit
+        duty.worker_qnt() < duty.config.get_duty_limit()
     }
 }
